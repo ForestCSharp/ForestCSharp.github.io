@@ -1,0 +1,206 @@
+
+/* Style sheet for Markdeep that corresponds closely to the default Latex article format 
+Put the following in your Markdeep document to use this:
+
+<link rel="stylesheet" href="https://casual-effects.com/markdeep/latest/dark.css">
+ */
+
+
+@font-face { font-family: LocalMenlo; src: url('Menlo-Regular.ttf'); } 
+
+@media screen {
+	body#md {
+		background: #1d211a;
+		color: #aaaaaa;
+		font-family: LocalMenlo, Monospace;
+		text-align: left;
+		width:80%;
+		margin: auto;
+	}
+}
+
+.markdeepFooter {
+	display: none;
+}
+
+.md div.title {
+	color: #aaaaaa;
+	font-family: LocalMenlo, Monospace;
+	font-size: 300%;
+	background: -webkit-linear-gradient(#ffffff, #ffffff);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+}
+
+.md a:link, .md a:visited{
+	color:#ffffff;
+	font-family: LocalMenlo, Monospace;
+	font-weight: bold;
+}
+
+.md hr {
+	height: 0px;
+	border: none;
+	border-top: 0.1pt solid #777;
+}
+
+.md h1, .md h2, .md h3, .md h4, .md h5, .md h6, .md div.nonumberh1, .md div.nonumberh2,.md div.nonumberh3, .md div.nonumberh4, .md div.nonumberh5, .md div.nonumberh6 {
+	color: #aaaaaa;
+	border-color: #ffffff;
+	font-family: LocalMenlo, Monospace;
+	font-size: 150%;
+	padding-bottom: 0px;
+}
+
+
+.md svg.diagram {
+	stroke: #ccc;
+	fill: #ccc;
+}
+
+.md svg.diagram .opendot {
+	fill: #000;
+}
+
+.md .listing {
+	background: #ddd;
+}
+
+.md pre.listing.tilde {
+	background: #1c1c1c; 
+	color: #ccc;
+}
+
+.md code > .default { 
+	color: #ccc;
+}
+
+.md .tilde code {
+	color: #000;
+}
+
+.md .backtick code {
+	color: #000;
+}
+
+div.markdeepFooter, div.markdeepFooter a {
+	color: #bc9249 !important;
+}
+
+b, em.asterisk {
+	font-style: normal; font-weight: bold;
+}
+
+@media screen {
+	b, em.asterisk {
+		color: #CBA;
+	}
+}
+
+a em.asterisk {
+	color: #6dafff;
+}
+
+.md h2, .md .nonumberh2 {
+	font-size: 125%
+}
+.md h3, .md h4, .md h5, .md h6, .md div.nonumberh3, .md div.nonumberh4, .md div.nonumberh5, .md div.nonumberh6 {
+	font-size: 115%
+}
+
+@media screen {
+	.md table.table td {
+		border: 1px solid #513302;
+	}
+
+	.md table.table th {
+		background: #af730c;
+		background: -webkit-linear-gradient(#d3a658, #af730c);
+		border: none;
+	}
+
+	.md table.table th:last-child {
+		border-right: 1px solid #845509;
+	}
+
+	.md table.table tr:nth-child(even) {
+		background-color: #231601;
+	}
+}
+
+.navbar {
+	display: flex; /* Use flexbox for horizontal layout */
+	background: #1d211a;
+	border-radius: 5px; /* Optional: add rounded corners */
+}
+.navbar a {
+	flex: 1; /* Make links take equal space */
+	color: white;
+	text-align: center;
+	padding: 14px 20px;
+	text-decoration: none;
+}
+.navbar a:hover {
+	background: #1d211a;
+	color: white;
+	text-decoration: none;
+}
+
+/* BEGIN Code Coloring */
+.hljs
+{
+	display:block;overflow-x:auto;background:#1d1f21;color:#c5c8c6;padding:.5em
+}
+
+.hljs-comment,.hljs-quote
+{
+	color:#a0f0aa
+}
+
+.hljs-variable,.hljs-template-variable,.hljs-tag,.hljs-name,.hljs-selector-id,.hljs-selector-class,.hljs-regexp,.hljs-deletion
+{
+	color:#cc6666
+}
+
+.hljs-number,.hljs-built_in,.hljs-builtin-name,.hljs-literal,.hljs-type,.hljs-params,.hljs-meta,.hljs-link
+{
+	color:#de935f
+}
+
+.hljs-attribute
+{
+	color:#f0c674
+}
+
+.hljs-string,.hljs-symbol,.hljs-bullet,.hljs-addition
+{
+	color:#b5bd68
+}
+
+.hljs-title,.hljs-section
+{
+	color:#81a2be
+}
+
+.hljs-keyword,.hljs-selector-tag
+{
+	color:#b294bb
+}
+
+.hljs-emphasis
+{
+	font-style:italic
+}
+
+.hljs-strong
+{
+	font-weight:bold
+}
+
+.hljs-function .hljs-title
+
+{ 
+	color:#81a2be
+
+}
+/* END Code Coloring */
