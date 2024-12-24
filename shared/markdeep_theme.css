@@ -5,12 +5,19 @@ Put the following in your Markdeep document to use this:
 <link rel="stylesheet" href="https://casual-effects.com/markdeep/latest/dark.css">
  */
 
+:root {
+  --main-bg-color: #1d211a;
+}
+
+body {
+	background: var(--main-bg-color)
+}
 
 @font-face { font-family: LocalMenlo; src: url('Menlo-Regular.ttf'); } 
 
 @media screen {
 	body#md {
-		background: #1d211a;
+		background: var(--main-bg-color);
 		color: #aaaaaa;
 		font-family: LocalMenlo, Monospace;
 		text-align: left;
