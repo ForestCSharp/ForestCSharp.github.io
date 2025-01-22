@@ -13,6 +13,10 @@ body {
 	background: var(--main-bg-color)
 }
 
+video {
+	width: 640px;
+}
+
 @font-face { font-family: LocalMenlo; src: url('Menlo-Regular.ttf'); } 
 
 @media screen {
@@ -76,18 +80,6 @@ body {
 .md pre.listing.tilde {
 	background: #1c1c1c; 
 	color: #ccc;
-}
-
-.md code > .default { 
-	color: #ccc;
-}
-
-.md .tilde code {
-	color: #000;
-}
-
-.md .backtick code {
-	color: #000;
 }
 
 div.markdeepFooter, div.markdeepFooter a {
@@ -154,60 +146,113 @@ a em.asterisk {
 }
 
 /* BEGIN Code Coloring */
-.hljs
-{
-	display:block;overflow-x:auto;background:#1d1f21;color:#c5c8c6;padding:.5em
+/*
+ * Visual Studio 2015 dark style
+ * Author: Nicolas LLOBERA <nllobera@gmail.com>
+ */
+
+.hljs {
+  background: #1E1E1E;
+  color: #DCDCDC;
 }
 
-.hljs-comment,.hljs-quote
-{
-	color:#a0f0aa
+.hljs-keyword,
+.hljs-literal,
+.hljs-symbol,
+.hljs-name {
+  color: #569CD6;
+}
+.hljs-link {
+  color: #569CD6;
+  text-decoration: underline;
 }
 
-.hljs-variable,.hljs-template-variable,.hljs-tag,.hljs-name,.hljs-selector-id,.hljs-selector-class,.hljs-regexp,.hljs-deletion
-{
-	color:#cc6666
+.hljs-built_in,
+.hljs-type {
+  color: #4EC9B0;
 }
 
-.hljs-number,.hljs-built_in,.hljs-builtin-name,.hljs-literal,.hljs-type,.hljs-params,.hljs-meta,.hljs-link
-{
-	color:#de935f
+.hljs-number,
+.hljs-class {
+  color: #B8D7A3;
 }
 
-.hljs-attribute
-{
-	color:#f0c674
+.hljs-string,
+.hljs-meta .hljs-string {
+  color: #D69D85;
 }
 
-.hljs-string,.hljs-symbol,.hljs-bullet,.hljs-addition
-{
-	color:#b5bd68
+.hljs-regexp,
+.hljs-template-tag {
+  color: #9A5334;
 }
 
-.hljs-title,.hljs-section
-{
-	color:#81a2be
+.hljs-subst,
+.hljs-function,
+.hljs-title,
+.hljs-params,
+.hljs-formula {
+  color: #DCDCDC;
 }
 
-.hljs-keyword,.hljs-selector-tag
-{
-	color:#b294bb
+.hljs-comment,
+.hljs-quote {
+  color: #57A64A;
+  font-style: italic;
 }
 
-.hljs-emphasis
-{
-	font-style:italic
+.hljs-doctag {
+  color: #608B4E;
 }
 
-.hljs-strong
-{
-	font-weight:bold
+.hljs-meta,
+.hljs-meta .hljs-keyword,
+
+.hljs-tag {
+  color: #9B9B9B;
 }
 
-.hljs-function .hljs-title
-
-{ 
-	color:#81a2be
-
+.hljs-variable,
+.hljs-template-variable {
+  color: #BD63C5;
 }
+
+.hljs-attr,
+.hljs-attribute {
+  color: #9CDCFE;
+}
+
+.hljs-section {
+  color: gold;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
+
+.hljs-bullet,
+.hljs-selector-tag,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-selector-attr,
+.hljs-selector-pseudo {
+  color: #D7BA7D;
+}
+
+.hljs-addition {
+  background-color: #144212;
+  display: inline-block;
+  width: 100%;
+}
+
+.hljs-deletion {
+  background-color: #600;
+  display: inline-block;
+  width: 100%;
+}
+
 /* END Code Coloring */
