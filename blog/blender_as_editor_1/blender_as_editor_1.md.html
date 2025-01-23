@@ -87,7 +87,7 @@ After defining our schema file (blender_live_link.fbs) we can run the flatbuffer
 
 **Writing Flatbuffers Data from Blender (Python) **<br/>
 
-Over in our game, we'll always expect the incoming flatbuffer to be our root_type (Update). This update will contain some number of objects we need to either initialize or change. Our initial update will send all of the objects in the active blender scene, but we can be more conservative about the updates we send later when only a few objects have changed. Using the python API flatbuffers generated for us, we build up the payload we'll send across the net to our running game.
+Over in our game, we'll always expect the incoming flatbuffer to be our root_type (Update). This update will contain some number of objects we need to either add, change, or remove. Our initial update will send all of the objects in the active blender scene, but we can be more conservative about the updates we send later when only a few objects have changed. Using the python API flatbuffers generated for us, we build up the payload we'll send across the net to our running game.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Python default
 # Function that takes in a list of blender objects and deleted object uids 
