@@ -8,26 +8,26 @@
 
 A couple of months back I watched a great talk from the folks at Santa Monica Studio at REAC 2024. Their talk [Maya as Editor: The game development approach of Santa Monica Studio](https://www.youtube.com/watch?v=ZwPogOhbNWw) outlined how Santa Monica Studio uses Maya for a large portion of their game-engine tooling. I had always liked the idea of leveraging Blender to serve a similar role in my personal projects and figured there's no time like the present to give it a shot.<br/>
 
-Why use an existing 3D application as your editor? I see several key advantages to doing this over building out your own editor. First, it's a huge time-saver. If you already have a piece of software that does most of what you require to build out your 3D worlds, then extending that software is a much smaller task than creating your own editor from scratch. Second, the method I'll outline below gives you a lot more control over how data is ferried between the two applications. Even if you were to roll your own toolset for designing levels, I suspect most projects will still require some amount of work in another 3D application for modelling, texturing, and animation. Rather than dealing with a bunch of GLTF/FBX files that you import into your level-design toolset, we can treat the .blend files as a single source of truth. We can send an initial update to the game on init as well as subsequent, smaller updates when anything changes.
+Why use an existing 3D application as your editor? First, it's a huge time-saver. If you already have a piece of software that does most of what you require to build out your 3D worlds, then extending that software is a much easier task than creating your own editor from scratch. Second, the method I'll outline below gives you a lot more control over how data is ferried between the two applications. Even if you were to roll your own toolset for designing levels, I suspect most projects will still require some amount of work in another 3D application for modelling, texturing, and animation. Rather than dealing with a bunch of GLTF/FBX files that you import into your level-design toolset, we will treat the .blend files as our single source of truth. We can send an initial full update to the game on init, but then we'll only send smaller incremental updates when anything changes.
 
 **Plan**<br/>
 
 There's two main pieces of software going into this little experiment:
-1. A blender extension, which will send the initial state and push updates to the game as we make changes
-2. Our game, which listens for updates from our extension
+1. A blender extension, which is responsible for sending data from blender to our game 
+2. Our game, which listens for updates from our extension and runs any gameplay/simulation logic on that data
 
-I've opted to use the [flatbuffers library](https://github.com/google/flatbuffers) to package up and send data. This allows us to describe our data layout in a spec file and then auto-generate both python and c++ code for reading/writing data. That data will then be sent from blender to our game via sockets, and then we'll use the excellent [Sokol libraries](https://github.com/floooh/sokol) to handle rendering the data sent from Blender in our game.
+I've opted to use the [flatbuffers library](https://github.com/google/flatbuffers) to package up and send data. This allows us to describe our data layout in a spec file and then auto-generate both python and c++ code for reading/writing data. That data will then be sent from blender to our game via sockets. Finally, we'll use the excellent [Sokol libraries](https://github.com/floooh/sokol) to handle rendering the data sent from Blender in our game.
 
 **Data Layout**<br/>
 
-Our first order of business will be to describe the data we need to send. For this first version, we'll only concern ourselves with sending basic object information and static mesh data. For each object we'll send its name, unique_id, visibility, location, scale, and rotation. If the object is a mesh object, we'll also send an optional 'mesh' entry, which contains our vertex and index data for that mesh.
+Our first order of business will be to describe the data we need to send. For this first version, we'll only concern ourselves with sending basic object information and static mesh data. For each object we'll send its name, unique_id, visibility, location, scale, and rotation. If the object is a mesh object, we'll also send an optional 'mesh' entry, which contains our vertex and index data for that mesh. Flatbuffers uses an IDL file to describe the data to be written/read in a C-like data-description-language. 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ C default
 // blender_live_link.fbs
 // Flatbuffers IDL file for blender live link
  
 namespace Blender.LiveLink;
-  
+
 struct Vec3 {
   x	: float;
   y	: float;
@@ -226,7 +226,7 @@ def make_flatbuffer_object(self, builder, obj, dependency_graph):
 
 **Reading Flatbuffers Data in our Running Game (C++) **<br/>
 
-In our currently-running game, we'll use the generated C++ flatbuffers code to read the incoming data. Unsurprisingly this code is very similar to the python code to write out our flatbuffer data.
+In our currently-running game, we'll use the generated C++ flatbuffers code to read the incoming data that we wrote and sent in our blender extension.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ C++ Default
 // Live Link Function. Runs on its own thread
@@ -448,7 +448,7 @@ With all of this setup, you can send updates to a running game by repeatedly cal
 
 **Handling Live Updates **<br/>
 
-Getting a big, initial update is great to first set up our scene, but what we really want is a lot of smaller updates as things change in blender. For that we can hook into one of blender's callbacks:     
+Getting a big, initial update is great to first set up our scene, but we also want to allow for smaller updates as things change in blender. For that we can hook into one of blender's callbacks:     
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Python default
 
@@ -505,6 +505,6 @@ depsgraph_update_post_callback.enabled = True
 bpy.app.handlers.depsgraph_update_post.append(depsgraph_update_post_callback)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Now that the live-update system is working, we've got a reasonably interactive method of modifying our running game world from blender. If we wanted to save out a world for loading later, we'd need only save a flatbuffer of a full-update of our scene. In subsequenty posts I plan on outlining how we might send other data to our game such as lighting, physics-objects, and of course gameplay. Feel free to follow development at <https://github.com/ForestCSharp/blender_live_link>. 
+Now that the live-update system is working, we've got a reasonably interactive method of modifying our running game world from blender. If we wanted to save out a world for loading later, we'd need only save a flatbuffer of a full-update of our scene. In subsequenty posts I plan on outlining how we might send other data to our game such as lighting, physics-objects, and gameplay. Feel free to follow development at <https://github.com/ForestCSharp/blender_live_link>. 
 
 <!-- Markdeep: --><style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace}</style><script src="../../markdeep.min.js" charset="utf-8"></script><script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>
