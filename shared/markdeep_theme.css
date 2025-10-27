@@ -17,7 +17,7 @@ video {
 	width: 640px;
 }
 
-@font-face { font-family: MainFont; src: url('droid-sans-mono.regular.ttf'); } 
+@font-face { font-family: MainFont; src: url('mononoki-Regular.ttf'); }
 
 @media screen {
 	body#md {
@@ -25,7 +25,7 @@ video {
 		color: #aaaaaa;
 		font-family: MainFont, Monospace;
 		text-align: left;
-		width:80%;
+		max-width: 65%;
 		margin: auto;
 	}
 }
