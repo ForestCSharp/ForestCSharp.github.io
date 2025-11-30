@@ -17,7 +17,7 @@ video {
 	width: 640px;
 }
 
-@font-face { font-family: MainFont; src: url('mononoki-Regular.ttf'); }
+@font-face { font-family: MainFont; src: url('LibreBaskerville-Regular.ttf'); }
 
 @media screen {
 	body#md {
