@@ -1,0 +1,126 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="stylesheet" href="/shared/markdeep_theme.css">
+<link rel="stylesheet" href="/shared/hljs-atelier-savanna.css">
+
+(insert ../../shared/header.md.html here)
+
+**<big>Blender as Editor Devlog #3: Native FlatBuffers</big>**<br/>
+
+<br/>
+
+The first version of blender_live_link was relatively simple. Our blender python extension monitored the scene for changes, packed those changes up into a flatbuffer, and sent them to the game over a socket. The game then consumed that binary update and updated its own runtime representation of the scene. For this first version, there were only two clearly-separated pieces of code: the Python exporter and the C++ game. Unfortunately the performance of the Python export left a lot to be desired. While I initially wanted to avoid modifying Blender itself, the performance of the Python exporter was not sufficient for more complex scenes. The best solution was to move the FlatBuffer generation into native code.
+
+The Python exporter is still valuable. It is portable, easy to inspect, and does not require building Blender from source. But the more runtime data Blender needed to produce, the more attractive a native path became. If blender_live_link is going to ask Blender for evaluated meshes, material state, armature data, and animation samples, it is worth asking whether the hot path should live closer to Blender's own C++ data structures.
+
+**Keeping the Python Path**<br/>
+
+The native path did not replace the extension wholesale. Only the actual generation of the flatbuffers data we need to send to our running game runs in the native path.
+
+The python extension still manages the Blender UI, socket connection, update batching, reset behavior, and file saving. The python-based fallback path is also still available for users who do not want to build Blender from source. The native path is an optimization, not a requirement.
+
+The build mode decides where the bytes are produced:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ bash default
+./build.sh          # native path by default
+./build.sh -native  # build/use local patched Blender
+./build.sh -python  # use installed Blender and Python exporter
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In Python mode, the extension builds the `Blender.LiveLink.Update` buffer directly with the generated Python FlatBuffers code. In native mode, the same extension calls into a new function exposed on `bpy.app`.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Python default
+output = bpy.app.live_link_make_update(
+    in_object_list,
+    in_deleted_object_uids,
+    dependency_graph,
+    reset,
+    update_reason,
+    sequence,
+)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+That call is the important handoff. Everything around it can stay normal Blender python extension code. The native implementation only has to answer one question: given the objects, deleted IDs, dependency graph, reset flag, and some diagnostic context, can it return the same kind of bytes the game already understands?
+
+**Patching Blender, But Keeping It Reproducible**<br/>
+
+Calling C++ from `bpy.app` means patching Blender itself. That sounds heavier than it is, but it does change the obligations around the project.
+
+The local native build now has a managed source tree under `blend_src/blender`. The build script pins the supported Blender source version by default, applies a small set of patches to Blender's Python internals, and passes the live-link repository path into CMake so the native code can include the generated FlatBuffers header.
+
+The patch does not try to hide all the interesting code inside a diff. The actual implementation lives as readable tracked source:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ text default
+blend_patches/live_link_native/bpy_live_link.cc
+blend_patches/live_link_native/bpy_live_link.hh
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The patch files make Blender compile and expose those files. The build script then syncs the readable sources into Blender's `source/blender/python/intern/` directory and rebuilds when they change.
+
+This is less convenient than a pure extension, but it is more honest about what is happening. Native mode is a local Blender fork, even if it is a tiny one. That means source version pinning, clear patch failures, and isolated Blender user settings are all part of the feature. Without those pieces, a tiny Blender fork becomes something I would be nervous to touch.
+
+**Writing the Same Message**<br/>
+
+The runtime side did not get a special native protocol. That was a deliberate constraint. Whether Python or C++ produces the data, the game receives a size-prefixed `Blender.LiveLink.Update` buffer.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ C++ default
+const auto update = ll::CreateUpdate(
+    builder,
+    objects_vector,
+    deleted_object_uids_vector,
+    materials_vector,
+    images_vector,
+    reset,
+    generation_seconds);
+
+ll::FinishSizePrefixedUpdateBuffer(builder, update);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+That keeps the live-link boundary stable. Native export is allowed to be faster, closer to Blender internals, and more explicit about evaluated data, but it is not allowed to create a second world for the game to understand.
+
+The implementation has to do the same kind of translation the Python exporter did: filter objects through the live-link settings, read session IDs, visibility, transforms, mesh arrays, material references, lights, rigid body metadata, gameplay components, armatures, and animation samples. The difference is that the native path can build the buffer while working directly with Blender's C and C++ structures instead of bouncing so much work through Python.
+
+**Parity Is A Product Feature**<br/>
+
+The first instinct for testing this kind of port is byte comparison. Generate the full update in native code, generate it again in Python, and demand identical bytes.
+
+That turned out to be the wrong target.
+
+FlatBuffers are deterministic only if you make all the same construction choices in all the same orders. Mesh extraction also contains plenty of float-heavy data where the meaningful question is not "did the buffer bytes match?" but "does the runtime-visible scene match?" Chasing byte identity started to push the native path toward slower and more artificial behavior. It was validating the serializer's incidental layout instead of the live-link contract.
+
+So the comparison moved up a level. The python extension can request both full updates, then ask native code to compare the decoded messages semantically:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ bash default
+./test_live_link_parity.sh -f test_file.blend
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The comparator ignores generation timing, exact-compares IDs, enums, booleans, counts, and byte payloads, and epsilon-compares float-heavy fields. For meshes, the goal is to compare the exported scene data the runtime will consume rather than require every construction detail to line up byte for byte.
+
+Eventually the comparator moved native too:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Python default
+matched, message = bpy.app.live_link_compare_updates(
+    native_bytes,
+    python_bytes,
+    100,
+)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+That made comparison fast enough to remain part of normal development. It also kept the diagnostics bounded: find useful differences, report them deterministically, and avoid turning a parity check into a second slow exporter.
+
+**What Changed**<br/>
+
+The surprising part of this work is that the native exporter was not only a performance optimization. It forced the project to admit that serialization is infrastructure.
+
+A small Python function can be "just the exporter." A native Blender path needs more ceremony: source acquisition, build profiles, pinned versions, patch application, source syncing, fallback behavior, isolated user profiles, validation commands, and parity tooling. Each piece exists because the live-link boundary has become important enough that breaking it should be hard to do accidentally.
+
+That feels like the right trade.
+
+Blender can still be the authoring surface. The game can still consume a compact runtime projection of the scene. Python can still be the portable path. But the project now has a second route for the cases where the editor pipeline wants to stand closer to Blender's internals.
+
+The lesson is not that every Blender extension should become a Blender patch. Most should not. The lesson is that once live editing grows beyond a demo, the boundary itself becomes a first-class system. It needs fallback, reproducibility, semantic tests, and enough native affordance to keep the tool responsive as the data model grows.
+
+That is less romantic than "Blender sends bytes to a game." It is also the part that makes the idea feel more real.
+
+You can follow the development at <https://github.com/ForestCSharp/blender_live_link>.
+
+<!-- Markdeep: --><style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace}</style><script src="../../markdeep.min.js" charset="utf-8"></script><script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>
