@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Forest Sharp Resume</title>
+    <style>
+        @page {
+            size: Letter;
+            margin: 0.55in;
+        }
+
+        :root {
+            --ink: #202124;
+            --muted: #5f6368;
+            --rule: #c8cdd2;
+            --accent: #2f5f73;
+            --paper: #ffffff;
+            --screen-bg: #f3f5f6;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            background: var(--screen-bg);
+            color: var(--ink);
+            font-family: "Avenir Next", Avenir, "Segoe UI", Helvetica, Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.38;
+        }
+
+        body {
+            margin: 0;
+            padding: 28px;
+        }
+
+        main {
+            width: min(8.5in, 100%);
+            margin: 0 auto;
+            padding: 0.58in 0.62in;
+            background: var(--paper);
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12);
+        }
+
+        header {
+            border-bottom: 2px solid var(--ink);
+            padding-bottom: 12px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28pt;
+            line-height: 1;
+            letter-spacing: 0;
+        }
+
+        .role {
+            margin-top: 5px;
+            color: var(--accent);
+            font-size: 12.5pt;
+            font-weight: 700;
+        }
+
+        .contact {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 12px;
+            margin-top: 9px;
+            color: var(--muted);
+            font-size: 9.5pt;
+        }
+
+        .contact a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        section {
+            margin-top: 16px;
+        }
+
+        h2 {
+            margin: 0 0 7px;
+            padding-bottom: 3px;
+            border-bottom: 1px solid var(--rule);
+            color: var(--accent);
+            font-size: 10.5pt;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        p {
+            margin: 0;
+        }
+
+        ul {
+            margin: 5px 0 0 18px;
+            padding: 0;
+        }
+
+        li {
+            margin: 3px 0;
+        }
+
+        .skills {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px 24px;
+            margin-top: 0;
+            list-style: none;
+        }
+
+        .skills li {
+            margin: 0;
+        }
+
+        .skills strong {
+            color: var(--ink);
+        }
+
+        .item {
+            break-inside: avoid;
+            margin-top: 12px;
+        }
+
+        .item:first-child {
+            margin-top: 0;
+        }
+
+        .item-head {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px;
+            align-items: baseline;
+        }
+
+        h3 {
+            margin: 0;
+            font-size: 11.5pt;
+            line-height: 1.25;
+        }
+
+        .meta {
+            color: var(--muted);
+            font-size: 9.5pt;
+            white-space: nowrap;
+        }
+
+        .subhead {
+            margin-top: 2px;
+            color: var(--muted);
+            font-size: 9.8pt;
+            font-weight: 700;
+        }
+
+        .placeholder {
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        @media (max-width: 720px) {
+            body {
+                padding: 0;
+            }
+
+            main {
+                padding: 28px 22px;
+                box-shadow: none;
+            }
+
+            .item-head,
+            .skills {
+                grid-template-columns: 1fr;
+                gap: 3px;
+            }
+
+            .meta {
+                white-space: normal;
+            }
+        }
+
+        @media print {
+            html,
+            body {
+                background: #ffffff;
+            }
+
+            body {
+                padding: 0;
+            }
+
+            main {
+                width: auto;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+            }
+
+            a {
+                color: inherit;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <header>
+            <h1>Forest Sharp</h1>
+            <div class="role">Software Engineer</div>
+            <div class="contact" aria-label="Contact information">
+                <span>Chicago, IL</span>
+                <span><a href="mailto:forestcollinssharp@gmail.com">forestcollinssharp@gmail.com</a></span>
+                <span><a href="https://github.com/ForestCSharp">github.com/ForestCSharp</a></span>
+                <span><a href="https://www.linkedin.com/in/forest-sharp/">linkedin.com/in/forest-sharp</a></span>
+            </div>
+        </header>
+
+        <section aria-labelledby="summary">
+            <h2 id="summary">Professional Summary</h2>
+            <p>
+                Software engineer with games industry experience since 2016, spanning rendering, tools,
+                UI systems, gameplay systems, and performance-sensitive C++ development. Experienced
+                shipping features across major Unreal Engine projects, improving artist and designer
+                workflows, debugging platform-specific issues, and collaborating across engineering,
+                art, design, QA, and UX research teams.
+            </p>
+        </section>
+
+        <section aria-labelledby="skills">
+            <h2 id="skills">Core Skills</h2>
+            <ul class="skills">
+                <li><strong>Languages:</strong> C++, JavaScript, Python</li>
+                <li><strong>Engines:</strong> Unreal Engine, game engine systems</li>
+                <li><strong>Specialties:</strong> rendering, profiling, optimization</li>
+                <li><strong>Tools:</strong> editor tooling, pipeline automation, WYSIWYG workflows</li>
+                <li><strong>Systems:</strong> UI, gameplay, physics, networking/debugging</li>
+                <li><strong>Platforms:</strong> PC, Nintendo Switch, PlayStation, Xbox</li>
+            </ul>
+        </section>
+
+        <section aria-labelledby="experience">
+            <h2 id="experience">Professional Experience</h2>
+
+            <article class="item">
+                <div class="item-head">
+                    <h3>Rendering Engineer - Rocket League</h3>
+                    <div class="meta">June 2025 - Present</div>
+                </div>
+                <div class="subhead">Psyonix | San Diego, CA | Remote</div>
+                <ul>
+                    <li>Optimized rendering performance across console platforms through GPU timing fixes, dynamic resolution improvements, and frame pacing work.</li>
+                    <li>Diagnosed and resolved rendering crashes and shader issues across Nintendo Switch, PS4, PS5, Xbox One, Xbox Series S/X, and PC.</li>
+                    <li>Built rendering and profiling tools for artists and engineers, including particle preview statistics, GPU debug object names, asset profiling improvements, and platform capture documentation.</li>
+                    <li>Supported new hardware visual quality by adding texture group controls, memory rebalancing, and profiling workflows that balanced fidelity with performance and memory budgets.</li>
+                    <li>Partnered with design, art, QA, and UX research to prototype and ship accessibility and performance improvements.</li>
+                </ul>
+            </article>
+
+            <article class="item">
+                <div class="item-head">
+                    <h3>UI Engineer - Fortnite</h3>
+                    <div class="meta">2021 - 2025</div>
+                </div>
+                <div class="subhead">Epic Games | Cary, NC | Remote</div>
+                <ul>
+                    <li>Collaborated with artists and designers to ship features across Fortnite Battle Royale, Fortnite Creative, and LEGO Fortnite.</li>
+                    <li>Created a WYSIWYG editor for a UI layout tool, replacing a data-table-only workflow with immediate visual feedback for designers.</li>
+                    <li>Delivered long-requested improvements to Unreal Engine's material editor, improving day-to-day usability for content creators.</li>
+                </ul>
+            </article>
+
+            <article class="item">
+                <div class="item-head">
+                    <h3>Software Engineer - Unannounced Project</h3>
+                    <div class="meta">2020 - 2021</div>
+                </div>
+                <div class="subhead">Ghostpunch Games | Sunrise, FL | Remote</div>
+                <ul>
+                    <li>Worked directly with the creative director and lead designer to develop and refine core gameplay elements.</li>
+                    <li>Debugged physics netcode to identify and resolve sources of gameplay desynchronization.</li>
+                    <li>Found artist and designer bottlenecks in the content pipeline and implemented tools to improve production workflow.</li>
+                </ul>
+            </article>
+
+            <article class="item">
+                <div class="item-head">
+                    <h3>Software Engineer - Outriders</h3>
+                    <div class="meta">2019 - 2020</div>
+                </div>
+                <div class="subhead">People Can Fly | Warsaw, Poland | Remote</div>
+                <ul>
+                    <li>Rewrote the C++ and JavaScript bridge with templates to reduce the code required to bind game systems to settings menu UI.</li>
+                    <li>Helped front-end developers connect JavaScript UI code to C++ game code while implementing HTML and JavaScript portions of tasks as needed.</li>
+                </ul>
+            </article>
+
+            <article class="item">
+                <div class="item-head">
+                    <h3>Software Engineer - Mortal Kombat 11</h3>
+                    <div class="meta">2018</div>
+                </div>
+                <div class="subhead">NetherRealm Studios | Chicago, IL | Remote</div>
+                <ul>
+                    <li>Developed automated testing routines for the MK11 editor to preserve correctness as new features were added.</li>
+                    <li>Built a GUI for a custom makefile-based build system, making builds easier for designers and artists to run.</li>
+                    <li>Fixed engine issues across rendering, physics, editor functionality, and related gameplay workflows.</li>
+                </ul>
+            </article>
+
+            <article class="item">
+                <div class="item-head">
+                    <h3>Gameplay Engineer - Radical Heights</h3>
+                    <div class="meta">2017 - 2018</div>
+                </div>
+                <div class="subhead">Boss Key Productions | Raleigh, NC | Remote</div>
+                <ul>
+                    <li>Converted UI mockups into in-game UMG interface elements and implemented their C++ behavior.</li>
+                    <li>Generated procedural textures to overlay information on the in-game map.</li>
+                    <li>Built a networked marker system to help players coordinate during team play.</li>
+                </ul>
+            </article>
+
+            <article class="item">
+                <div class="item-head">
+                    <h3>Junior Gameplay Engineer - LawBreakers</h3>
+                    <div class="meta">2016 - 2017</div>
+                </div>
+                <div class="subhead">Boss Key Productions | Raleigh, NC</div>
+                <ul>
+                    <li>Reimplemented performance-critical gameplay systems in C++ to help meet a 60 FPS target on desktop and console.</li>
+                    <li>Integrated Nvidia Highlights with the scoring system to automatically record notable gameplay events such as multi-kills and kill streaks.</li>
+                </ul>
+            </article>
+        </section>
+
+        <section aria-labelledby="projects">
+            <h2 id="projects">Selected Projects</h2>
+            <article class="item">
+                <div class="item-head">
+                    <h3>Blender Live Link</h3>
+                    <div class="meta">Personal Technical Project</div>
+                </div>
+                <ul>
+                    <li>Built a Blender-to-game live link that sends scene updates from Blender to a C++ game runtime over a socket using FlatBuffers.</li>
+                    <li>Moved hot-path export work from Python into native C++ inside Blender, producing reported gains of 10x to 40x on larger scenes.</li>
+                    <li>Designed the native path to preserve the existing runtime protocol while adding direct access to evaluated mesh data and future parallel processing opportunities.</li>
+                </ul>
+            </article>
+        </section>
+
+        <section aria-labelledby="education">
+            <h2 id="education">Education</h2>
+            <article class="item">
+                <div class="item-head">
+                    <h3>Bachelor of Science in Computer Science</h3>
+                    <div class="meta">August 2011 - May 2016</div>
+                </div>
+                <div class="subhead">Vanderbilt University | Nashville, TN</div>
+            </article>
+        </section>
+    </main>
+</body>
+</html>
