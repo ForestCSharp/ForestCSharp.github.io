@@ -1,0 +1,118 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="stylesheet" href="/shared/markdeep_theme.css?v=hermes-20260630c">
+<link rel="stylesheet" href="/shared/hljs-atelier-savanna.css">
+
+(insert ../../shared/header.md.html here)
+
+**<big>Blender as Editor Devlog #3: Native FlatBuffers</big>**<br/>
+
+The first version of blender_live_link was pretty straightforward. The Blender Python extension watched the scene for changes, packed them into a FlatBuffer, and shipped them off to the game over a socket. The game consumed that binary update and kept its own runtime scene in sync. Two clearly separated pieces of code: the Python exporter, and the C++ game.
+
+The problem was performance. For anything beyond simple scenes, Python was too slow. I'd been trying to avoid touching Blender's source, but eventually I had to admit the right answer was to move FlatBuffer generation into native code.
+
+Python is still useful here - it's portable, easy to read, and doesn't require a custom Blender build. But the more runtime data the live link needs (evaluated meshes, material state, armature data, animation samples...), the more it made sense to put the hot path closer to Blender's own C++ data structures.
+
+**Keeping the Python Path**<br/>
+
+Going native didn't mean throwing out the extension. Only the FlatBuffer generation itself moved; everything else stayed in Python. The extension still handles the Blender UI, the socket connection, update batching, reset behavior, and file saving. The Python-based path is still fully available for anyone who doesn't want to build Blender from source - native mode is an optimization, not a requirement.
+
+The build script makes this explicit:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ bash default
+./build.sh          # native path by default
+./build.sh -native  # build/use local patched Blender
+./build.sh -python  # use installed Blender and Python exporter
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In Python mode, the extension builds the `Blender.LiveLink.Update` buffer directly with the generated Python FlatBuffers code. In native mode, it calls a new function exposed on `bpy.app`:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Python default
+output = bpy.app.live_link_make_update(
+    in_object_list,
+    in_deleted_object_uids,
+    dependency_graph,
+    reset,
+    update_reason,
+    sequence,
+)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+That one call is the whole handoff. The native code just has to answer: given objects, deleted IDs, a dependency graph, and some context, can it return bytes the game already understands? Everything around it stays normal Python.
+
+**Patching Blender Without Losing Your Mind**<br/>
+
+Exposing a function on `bpy.app` means patching Blender itself. That sounds scarier than it is, but it does change what the project needs to maintain.
+
+There's now a managed Blender source tree under `blend_src/blender`. The build script pins the supported Blender version, applies a small patch to Blender's Python internals, and passes the live-link repo path into CMake so the native code can include the generated FlatBuffers header.
+
+The actual implementation lives as readable tracked source rather than buried inside a diff:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ text default
+blend_patches/live_link_native/bpy_live_link.cc
+blend_patches/live_link_native/bpy_live_link.hh
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The patch just makes Blender compile and expose those files. The build script syncs them into `source/blender/python/intern/` and rebuilds when they change.
+
+It's less convenient than a pure extension - but it's more honest. Native mode is a local Blender fork, even if it's a tiny one. That means source version pinning, clear patch failures, and isolated Blender user settings need to be part of the setup. Without those, a small fork becomes something I'd be afraid to ever update.
+
+**The Same Message, Two Paths**<br/>
+
+The runtime side didn't get a new protocol. Regardless of whether Python or C++ produces the data, the game always receives the same size-prefixed `Blender.LiveLink.Update` buffer:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ C++ default
+const auto update = ll::CreateUpdate(
+    builder,
+    objects_vector,
+    deleted_object_uids_vector,
+    materials_vector,
+    images_vector,
+    reset,
+    generation_seconds);
+
+ll::FinishSizePrefixedUpdateBuffer(builder, update);
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This was a deliberate constraint. The native path can be faster and can reach deeper into Blender's internals, but it's not allowed to create a second format the game has to understand.
+
+In practice, the implementation does the same translation work the Python exporter did - filtering objects, reading session IDs, visibility, transforms, mesh arrays, material references, lights, rigid body metadata, gameplay components, armatures, animation samples. The difference is doing all of that while working directly with Blender's C and C++ structures rather than trudging through Python-interpreted code.
+
+**Why Byte-Level Comparison Doesn't Work**<br/>
+
+My first instinct for testing the port was to compare bytes. Generate the full update natively, generate it again in Python, demand they match.
+
+That turned out to be the wrong target.
+
+FlatBuffers are only deterministic if you make all the same construction choices in the same order. Meshes also involve a lot of float-heavy data where "did the bytes match?" isn't the right question anyway - "does the runtime scene look the same?" is. Chasing byte identity pushed the native path toward slower, more artificial behavior just to match Python's incidental layout choices.
+
+So the comparison moved up a level. The extension can request both full updates and then ask native code to compare the decoded messages:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ bash default
+./test_live_link_parity.sh -f test_file.blend
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The comparator ignores generation timing, does exact comparisons on IDs, enums, booleans, counts, and byte payloads, and epsilon-compares float-heavy fields. For meshes, it compares the exported scene data the runtime will actually consume.
+
+Eventually, the comparator moved to native code too:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Python default
+matched, message = bpy.app.live_link_compare_updates(
+    native_bytes,
+    python_bytes,
+    100,
+)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+That made parity checks fast enough to keep in normal development - and kept the diagnostics focused on differences that actually matter.
+
+**Conclusions**<br/>
+
+A native Blender path needed quite a bit more infrastructure: source acquisition, build profiles, pinned versions, patch application, source syncing, fallback behavior, isolated user profiles, validation commands, parity tooling. Each piece exists because the live-link boundary matters enough now that breaking it should be hard to do by accident.
+
+The increased complexity has already paid off, though. It has netted us significant gains (10x - 40x) on larger scenes from the port to C++ alone. Better still, having this code in C++ opens the door to further optimizations unavailable in Python, like parallel mesh processing and direct access to Blender's evaluated mesh data.
+
+Blender is still the authoring surface. The game still consumes a compact runtime projection of the scene. Python is still the portable path. But the project now has a second route that really shines when working with complex scenes.
+
+You can follow the development at <https://github.com/ForestCSharp/blender_live_link>.
+
+<!-- Markdeep: --><style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace}</style><script src="../../markdeep.min.js" charset="utf-8"></script><script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>

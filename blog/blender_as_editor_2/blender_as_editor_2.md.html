@@ -1,15 +1,21 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="stylesheet" href="/shared/markdeep_theme.css?v=hermes-20260630c">
+<link rel="stylesheet" href="/shared/hljs-atelier-savanna.css">
+
 
 (insert ../../shared/header.md.html here)
 
 **<big>Blender as Editor Devlog #2: Physics**</big><br/>
 
-<br/> 
+The rendering path in blender_live_link is actually pretty flexible: if the live-link bridge sends a new mesh or transform, the runtime can usually just scrap the old version and build a fresh one.
 
-The previous post outlined how we might pass geometry from Blender to our game and render it. Now we'll add a little dynamism to our game by adding some physics. We're going to be using the [Jolt Library](https://github.com/jrouwe/JoltPhysics) to run our physics simulation.
+But physics complicates things. Once an object is in a simulation, its important data might no longer be controlled by Blender. Gravity, collisions, impulses, or even gameplay can move it before the next edit comes through. When Blender sends an update, is it changing the original design, the simulation state, or both?
 
-**Building Jolt**<br/>
+For now, we're keeping the ownership model simple: Blender decides which objects are part of the physics world, and the game engine owns and manages the simulation. If Blender edits an object again, the Blender-authored change takes priority, and the runtime resets/rebuilds the body.
 
-Jolt provides a CMakeLists.txt for integration with cmake-based projects, but because our game isn't using cmake we're going to build it ourselves by collecting the relevant files in the Jolt source directory. We'll include the Jolt source files we need in [jolt_single_file.cpp](https://github.com/ForestCSharp/blender_live_link/blob/main/game/src/Jolt/jolt_single_file.cpp), and then simply compile that one file as a static library with this command:
+**Making the Scene Move**<br/>
+
+[Jolt Physics](https://github.com/jrouwe/JoltPhysics) handles the simulation. blender_live_link is intentionally small and avoids build systems like CMake, so Jolt is built as a static library by collecting the required source into a single compilation unit:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ bash default
 clang 	-c src/Jolt/jolt_single_file.cpp \
@@ -18,113 +24,90 @@ clang 	-c src/Jolt/jolt_single_file.cpp \
 				-I src 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-After linking that library to our game we're ready to start sending physics information from Blender.
+After that, the Jolt setup is mostly adapted from the hello-world sample: initialize the allocator, factory, collision layers, and physics system, then step it every frame. The live-link question starts after that: how does a Blender object become a runtime body, and how does an edit affect those runtime bodies?
 
-**Flatbuffers Definitions**<br/>
+**Why Physics Changes the Contract**<br/>
 
-For the first iteration of our physics system, we'll assume all rigid bodies are defined by the convex hull of their mesh geometry. This means an object that defines rigid-body information must necessarily be a mesh object in Blender. Because entries in a FlatBuffers table are optional, we can denote an object should enable physics simply by whether it contains a rigid_body entry or not. This entry will provide whether the body is dynamic (non-dynamic bodies can block dynamic bodies but they don't participate in the simulation) as well as its mass.
+For rendering, an object update can be treated as replacement data: new mesh, new transform, new storage buffer. With physics, replacements can be more consequential. A body might already exist in the simulation. It might be awake. It might have contacts. It might have velocity. Its transform may no longer match Blender at all.
+
+The useful simplification is to make Blender authoritative for edits. If an updated object contains rigid-body data, simply recreate its Jolt body from the latest Blender-authored state.
+
+**Rigid Bodies as Data**<br/>
+
+The schema changes are minimal. A rigid body is optional object data, which means the presence of the table is the first ownership signal:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ c++ default
 struct RigidBody
 {
-	// Does this rigid body actively participate in the simulation?
-	is_dynamic	: bool;
-
-	// Mass in kg
-	mass		: float;
+	is_dynamic : bool;
+	mass       : float;
 }
 
-//... Previously defined flatbuffers data omitted
-
-table Object 
+table Object
 {
-	//... Previously defined object data omitted
-
-	// optional rigid body data
-	rigid_body  : RigidBody;
+	// transform, mesh, and other object data omitted
+	rigid_body : RigidBody;
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Blender/Python**<br/>
+For this version, the runtime assumes a mesh object with rigid-body data should use a convex hull built from the mesh vertices.
 
-There's not too much to do in python to send over the new rigid_body entry. When iterating over the objects to send to our game, we simply check if the current object has a rigid body. If it does, we add it to the object's flatbuffer table.
+That keeps the Blender side pleasantly small:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ python default
- # Add Rigid Body Data if it exists
 if obj.rigid_body:
 	Object.AddRigidBody(builder, RigidBody.CreateRigidBody(
-		builder, 
+		builder,
 		isDynamic = obj.rigid_body.enabled,
 		mass = obj.rigid_body.mass
 	))
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Game/C++**<br/>
+The tradeoff is that collision-shape policy currently lives in the runtime. A more complete tool should let Blender express whether an object wants a hull, box, sphere, triangle mesh, or some custom collision representation.
 
-The bulk of our physics-related code lives in one file: [physics_system.h](https://github.com/ForestCSharp/blender_live_link/blob/main/game/src/physics_system.h), which mostly adapts jolt's [hello-world sample](https://github.com/jrouwe/JoltPhysics/blob/master/HelloWorld/HelloWorld.cpp). 
-After initializing jolt with `jolt_init()`, we can call `object_add_jolt_body()` and `object_remove_jolt_body()` to add/remove physics bodies in our simulation. Every frame we need to call `jolt_update()` to update the simulation. Finally we should call `jolt_shutdown()` when shutting down our program.
+**Keeping Simulation State in Sync**<br/>
 
-When we receive object updates from Blender, we need to check for our new rigid_body table entry on each updated object:
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ c++ default
-
-if (auto objects = update->objects())
-{
-	for (i32 idx = 0; idx < objects->size(); ++idx)
-	{
-		auto object = objects->Get(idx);
-
-		//... irrelevant code omitted 
-
-		// If we have a rigid body table entry, add it to our object entry
-		if (auto object_rigid_body = object->rigid_body())
-		{
-			game_object.has_rigid_body = true;
-			game_object.rigid_body = (RigidBody){
-				.is_dynamic = object_rigid_body->is_dynamic(),
-				.mass = object_rigid_body->mass(),
-				.jolt_body = nullptr, // Jolt_body will be setup in our simulation thread later
-			};
-		}
-	}
-}
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
-
-Then in our simulation thread we'll clean up any old rigid bodies and add the new one:
+When the game detects that an object has a rigid body, it creates a runtime body description from the Blender data, but defers creation of the Jolt body until the main loop. That allows the game to consume multiple updates before stepping the simulation, and it allows the main loop to manage body lifecycles in a single place:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ c++ default
-while (optional<Object> received_updated_object = state.updated_objects.receive())
+if (auto object_rigid_body = object->rigid_body())
 {
-	Object& updated_object = *received_updated_object;
-
-	//... irrelevant code omitted 
-
-	if (state.objects.contains(updated_object_uid))
-	{	
-		Object& existing_object = state.objects[updated_object_uid];
-		object_cleanup_gpu_resources(existing_object);
-
-		// Clean up old jolt body
-		if (existing_object.has_rigid_body)
-		{
-			object_remove_jolt_body(existing_object);
-		}
-	}
-
-	// Add new jolt body if we have a rigid body entry
-	if (updated_object.has_rigid_body)
-	{
-		object_add_jolt_body(updated_object);
-	}
-
-	state.objects[updated_object_uid] = updated_object;
+	game_object.has_rigid_body = true;
+	game_object.rigid_body = (RigidBody){
+		.is_dynamic = object_rigid_body->is_dynamic(),
+		.mass = object_rigid_body->mass(),
+		.jolt_body = nullptr,
+	};
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-With that, we've added some much-needed interactivity to our game, as demonstrated in the video below:
+When the main loop consumes the updated object, it releases any previous physics body before adding the replacement. 
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ c++ default
+if (state.scene.objects.contains(updated_object_uid))
+{
+	Object& existing_object = state.scene.objects[updated_object_uid];
+
+	if (existing_object.has_rigid_body)
+	{
+		object_remove_jolt_body(existing_object);
+	}
+}
+
+if (updated_object.has_rigid_body)
+{
+	object_add_jolt_body(updated_object);
+}
+
+state.scene.objects[updated_object_uid] = updated_object;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Right now, the system just destroys and recreates objects. That works fine for early prototyping, but it's not exactly elegant. A more refined approach would distinguish between transform changes, collision-shape updates, explicit simulation resets, and even feedback from the runtime back to Blender.
+
+**What This Revealed**<br/>
+
+The real takeaway is that live tooling is mostly about ownership. Whether it's meshes, materials, lights, physics, or gameplay components, every new feature asks the same questions again: who owns the source of truth, who owns runtime state, and what messages cross that line?
 
 ![](blender_as_editor_2.mov)
-
-<br/>
 
 <!-- Markdeep: --><style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace}</style><script src="../../markdeep.min.js" charset="utf-8"></script><script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>
