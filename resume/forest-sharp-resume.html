@@ -346,7 +346,20 @@
                 <ul>
                     <li>Built a Blender-to-game live link that sends scene updates from Blender to a C++ game runtime over a socket using FlatBuffers.</li>
                     <li>Moved hot-path export work from Python into native C++ inside Blender, producing reported gains of 10x to 40x on larger scenes.</li>
-                    <li>Designed the native path to preserve the existing runtime protocol while adding direct access to evaluated mesh data and future parallel processing opportunities.</li>
+                    <li>Directed agent-assisted development of the native live-link path, using a comparison function against the existing Python exporter to give the agent clear success criteria while preserving runtime protocol compatibility.</li>
+                </ul>
+            </article>
+
+            <article class="item">
+                <div class="item-head">
+                    <h3>c_game</h3>
+                    <div class="meta"><a href="https://github.com/forestcsharp/c_game">forestcsharp/c_game</a></div>
+                </div>
+                <div class="subhead">Personal Technical Project</div>
+                <ul>
+                    <li>Built a minimal C11 renderer and game runtime with few external libraries, including macOS and Windows platform window/input layers.</li>
+                    <li>Implemented GPU abstraction work with Vulkan and Metal backends, plus shader compilation from GLSL to SPIR-V and Metal Shading Language.</li>
+                    <li>Developed engine systems for static/animated glTF loading, game object/component storage, debug drawing, immediate-mode GUI, task/threading utilities, and experimental rigid-body physics/collision.</li>
                 </ul>
             </article>
         </section>
