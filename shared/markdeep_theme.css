@@ -486,7 +486,7 @@ video {
 	margin: 0 auto 28px;
 	color: var(--ink);
 	font-family: var(--font-display);
-	font-size: 4.4rem;
+	font-size: 3.08rem;
 	font-weight: 400;
 	letter-spacing: 0.03em;
 	line-height: 0.95;
@@ -797,7 +797,7 @@ a em.asterisk {
 	}
 
 	.resume-title {
-		font-size: 4rem;
+		font-size: 2.8rem;
 	}
 
 	.md h1,
@@ -868,7 +868,7 @@ a em.asterisk {
 	}
 
 	.resume-title {
-		font-size: 3rem;
+		font-size: 2.1rem;
 	}
 
 	.md h1,
