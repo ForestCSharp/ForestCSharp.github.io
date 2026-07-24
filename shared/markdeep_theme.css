@@ -709,7 +709,7 @@ body#md > video,
 }
 
 .md .listing {
-	background: var(--paper);
+	background: #171e1f;
 }
 
 .md code,
@@ -728,15 +728,9 @@ body#md > video,
 	padding: 20px 22px;
 	border: 1px solid var(--line);
 	border-radius: 0;
-	background: var(--paper);
-	color: var(--paper-ink);
+	background: #171e1f;
+	color: #c7c7a5;
 	box-shadow: var(--shadow);
-}
-
-.md pre.listing.tilde *,
-.md pre.tilde * {
-	background: transparent !important;
-	color: var(--paper-ink) !important;
 }
 
 .md pre.listing {
