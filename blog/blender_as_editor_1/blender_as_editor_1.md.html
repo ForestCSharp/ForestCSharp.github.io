@@ -12,17 +12,17 @@
 
 What does it mean for Blender to be the editor for a game?
 
-That question started rattling around my head after watching Santa Monica Studio's REAC 2024 talk, [Maya as Editor: The game development approach of Santa Monica Studio](https://www.youtube.com/watch?v=ZwPogOhbNWw). Rather than treating Maya as just another tool that exports data for later import into the game, the system uses Maya as the authoring surface, with game-side tooling determining which parts of that authored state become runtime data.
+That question started rattling around my head after watching Santa Monica Studio's REAC 2024 talk, [Maya as Editor: The game development approach of Santa Monica Studio](https://www.youtube.com/watch?v=ZwPogOhbNWw). Rather than treating Maya as just another tool that exports data for later import into the game, their system uses Maya as the game's world editor, with game-side tooling determining which parts of the scene authored in Maya become runtime data.
 
-This experiment applies that idea to Blender. Instead of treating `.blend` files as inputs to an export step, Blender emits messages about the live scene. A running game then consumes those messages and maintains its own representation. 
+This experiment applies that same idea to Blender. Instead of treating `.blend` files as inputs to an export step, Blender emits messages about the live scene. A running game then consumes those messages to build up the game world. 
 
 **Why Blender?**<br/>
 
-Practically, Blender already has a viewport, transform tools, mesh editing, hierarchy, materials, lights, animation data, and a Python API. That is a large amount of editor infrastructure that does not need to be rebuilt before doing useful work.
+Blender gives you a lot of functionality out of the box that you'd otherwise need to implement yourself for a world editor. Blender already has a viewport, transform tools, mesh editing, scene hierarchy, materials, lights, animation data, and a Python API. That is a significant amount of editor infrastructure that does not need to be rebuilt before doing useful work.
 
 More importantly, Blender can remain the single source of truth for game authoring state. A `.blend` file can describe the entirety of a game's editable world, while the game receives a reduced projection of that world. That changes the problem from "can Blender export a mesh?" to "what does the runtime need to know when authored scene state changes?"
 
-For this first version, the useful simplification is to make the runtime vocabulary small. The game needs objects, transforms, visibility, and mesh data. It also needs stable enough identifiers to update or remove the same runtime object later.
+The first version of this Blender to Game contract will be purposefully small. The game needs objects, transforms, visibility, and mesh data. It also needs stable enough identifiers to update or remove the same runtime object later.
 
 **Choosing the Boundary**<br/>
 
@@ -31,9 +31,9 @@ There are two pieces of software in the loop:
 1. A Blender extension, written in Python, that watches the scene and serializes relevant state.
 2. A game executable, written in C++, that listens on a socket and turns that state into runtime objects.
 
-[FlatBuffers](https://github.com/google/flatbuffers) sits at the boundary between the two processes. It provides a shared schema that can be generated into both Python and C++, and it keeps the payload binary without requiring a hand-written serializer and deserializer.
+[FlatBuffers](https://github.com/google/flatbuffers) sits at the boundary between the two pieces. It provides a shared schema that can be generated into both Python and C++ bindings, and it keeps the payload binary without requiring a hand-written serializer and deserializer.
 
-Blender objects contain far more state than the game should know about. The first FlatBuffers schema intentionally throws most of that away:
+Here's what one of my earliest FlatBuffers schemas looked like:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ C default
 table Mesh {
@@ -58,15 +58,15 @@ table Update {
 }
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The schema performs a terse but important translation. Rather than mirror Blender objects wholesale, it compiles them into a compact runtime vocabulary. The game does not know or care about edit mode, object datablocks, modifier stacks, or Blender's dependency graph. It knows only about renderable (mesh) objects with identifiers and transforms.
+The Python extension uses this schema to process Blender objects and package them up into a simple game-ready format, only sending what the game will require across the socket. 
 
 **What an Update Contains**<br/>
 
 A full update sends the current scene and rebuilds the runtime side from that description. That is useful for startup and as a blunt recovery path when incremental state is suspect.
 
-More interestingly, as the user edits the scene, the extension can send only the objects that changed. This allows the runtime to preserve state for objects that were not edited. 
+Additionally, as the user edits the scene, the extension can send only the objects that changed. This allows the game to preserve state for objects that were not edited while the extension sends smaller, easier-to-parse updates to the game. 
 
-To achieve this, a unique identifier for each object will be required. Thankfully, Blender already provides just that: `session_uid`.
+To achieve this, a unique identifier for each object is required. Thankfully, Blender already provides just that: `session_uid`.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Python default
 session_uid = obj.session_uid
@@ -81,9 +81,9 @@ Object.AddScale(builder, Vec3.CreateVec3(builder, obj_scale.x, obj_scale.y, obj_
 Object.AddRotation(builder, Quat.CreateQuat(builder, obj_rotation.x, obj_rotation.y, obj_rotation.z, obj_rotation.w))
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For a live editing session, that works well. It avoids relying on object names, and it gives the runtime a stable key for replacement. The limitation is that this is session identity, not persistent identity. Comparing two exports of the same scene would need a different identifier.
+This works well for live-edit sessions. It avoids relying on object names, and gives the runtime a stable key for replacement. The main limitation is that this is a session identifier, not a persistent identity. Comparing two exports of the same scene (in separate sessions) would require a different method.
 
-The next problem is deciding when authored state has changed enough to emit a message. Blender's dependency graph can fire frequently while editing, so the extension coalesces updates behind a short timer:
+Another decision is deciding when authored state has changed enough to emit a message. Blender's dependency graph can fire frequently while editing, so the extension coalesces updates behind a short timer:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Python default
 def schedule_send():
@@ -96,9 +96,9 @@ def schedule_send():
 
 **Making Mesh Data Runtime-Friendly**<br/>
 
-Mesh data is where the boundary stops being a simple copy operation. Blender's mesh is authoring data. The game wants predictable and optimized vertex/index buffers.
+While Blender's internal mesh data is authoring data, the game only needs predictable and optimized vertex/index buffers.
 
-For this version, each object is evaluated through Blender's dependency graph, triangulated, and packaged into vertex and index data. Evaluation gives the runtime the post-modifier mesh. Triangulation removes topology ambiguity. The game does not need to care whether the original Blender mesh contained quads, n-gons, or unapplied modifier stacks.
+Each mesh object is evaluated through Blender's dependency graph, triangulated, and packaged into vertex and index data. Evaluation gives the runtime the post-modifier mesh, and triangulation removes topological ambiguity.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Python default
 obj_evaluated = obj.evaluated_get(dependency_graph)
@@ -110,17 +110,15 @@ bmesh.ops.triangulate(bm, faces=bm.faces[:])
 bm.to_mesh(mesh)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This conversion is useful, yet lossy. The runtime receives compiled geometry, not editable mesh intent. That is exactly what the renderer wants, but it's worth calling out because it becomes a recurring pattern: every live-link feature must decide whether Blender is sending authored intent or runtime-ready data.
-
 Since this first pass, the project has moved toward flatter arrays for positions, normals, UVs, skinning data, and material IDs.
 
-**What Worked / What Feels Fragile**<br/>
+**Conclusions**<br/>
 
-The most rewarding aspect is that the loop works. Objects can be moved or edited in Blender, and those changes are instantly reflected in the running game: no export or import steps required. Blender begins to feel less like a separate content tool and more like a direct frontend for the engine.
+So what does all of this give us? Objects can be moved or edited in Blender, and those changes are instantly reflected in the running game: no export or import steps required. Blender is beginning to feel less like a separate content tool and more like a direct frontend for the game engine.
 
-The challenge lies in the evolving complexity of the boundary between the two. Decisions about object identity, update batching, evaluated meshes, and triangulation may seem minor individually, but together, they shape what the runtime permits Blender to communicate.
+As I’ve continued to develop this system, the decisions concerning the boundary between Blender and the game have interested me most. Choices about object identity, update batching, evaluated meshes, and triangulation may seem minor individually, but together, they shape what constitutes our game world.
 
-Static rendering serves as a straightforward first test, as Blender retains full control over the data. Physics, however, introduces the next layer of complexity. Once the game starts simulating objects, the runtime develops its own state, making it far more difficult to maintain a consistent boundary.
+Static rendering has served as a straightforward first test, as Blender retains full control over the data. Physics, however, will introduce an additional layer of complexity. Once the game starts simulating objects, the runtime must manage more of its own state.
 
 You can follow the development at <https://github.com/ForestCSharp/blender_live_link>.
 
