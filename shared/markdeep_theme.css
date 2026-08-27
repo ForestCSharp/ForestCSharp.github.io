@@ -389,6 +389,10 @@ video {
 	border: 1px solid var(--line);
 }
 
+.local-lab-grid {
+	grid-template-columns: repeat(var(--local-lab-columns, 1), minmax(0, 1fr));
+}
+
 .post-card {
 	position: relative;
 	display: flex;

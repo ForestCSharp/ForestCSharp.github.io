@@ -1,0 +1,16 @@
+[
+	{
+		"title": "Vectors and Coordinate Systems",
+		"kicker": "Graphics foundations · 01",
+		"summary": "Manipulate vectors, change coordinate bases, and explore dot products, projections, and cross products.",
+		"url": "/lab/vectors-and-coordinate-systems/vectors-and-coordinate-systems.md.html",
+		"displayNumber": "01"
+	},
+	{
+		"title": "Camera Projection Lab",
+		"kicker": "Interactive system pilot",
+		"summary": "Explore perspective projection, clipping planes, field of view, and object depth in an interactive 3D scene.",
+		"url": "/lab/camera-projection/camera-projection.md.html",
+		"displayNumber": "P"
+	}
+]

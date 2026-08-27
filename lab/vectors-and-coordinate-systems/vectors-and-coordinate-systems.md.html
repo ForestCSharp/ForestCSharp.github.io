@@ -1,0 +1,66 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="stylesheet" href="/shared/markdeep_theme.css?v=hermes-20260826b">
+<link rel="stylesheet" href="/shared/hljs-darkmoss.css">
+<script src="/shared/interactive/loader.js?v=20260826u"></script>
+
+(insert ../../shared/header.md.html here)
+
+**<big>Vectors and Coordinate Systems</big>**<br/>
+
+A vector describes a direction and a magnitude. The familiar tuple `(x, y, z)` is not the vector itself—it is the vector measured against a particular set of basis directions. These three visualizers build from that definition to two of the most common vector operations in graphics.
+
+**1. Building a vector from a basis**<br/>
+
+If the basis directions are **x̂**, **ŷ**, and **ẑ**, a vector is the sum of three scaled basis vectors:
+
+`v = v[x] x̂ + v[y] ŷ + v[z] ẑ`
+
+The red, green, and blue arrows place those three pieces head-to-tail. Together they arrive at the same endpoint as the yellow vector. Change any coefficient to rebuild the vector along that basis direction.
+
+<cg-demo
+	demo="vector-from-basis"
+	aspect="16:10"
+	aria-label="Interactive demonstration of building a vector from basis directions">
+	<img data-fallback
+		src="./vector-from-basis-fallback.png"
+		alt="A vector assembled head-to-tail from three scaled basis directions">
+</cg-demo>
+
+**2. Vector addition**<br/>
+
+Vector addition combines displacements component by component:
+
+`A + B = (A[x] + B[x], A[y] + B[y], A[z] + B[z])`
+
+The faded copy of **B** starts at the tip of **A**, making the head-to-tail construction explicit. The cyan result reaches the same point directly from the origin. The parallelogram also shows why changing the order to **B + A** reaches the same endpoint.
+
+<cg-demo
+	demo="vector-addition"
+	aspect="16:10"
+	aria-label="Interactive vector addition demonstration">
+	<img data-fallback
+		src="./vector-addition-fallback.png"
+		alt="Vectors A and B forming a parallelogram with their sum shown as its diagonal">
+</cg-demo>
+
+**3. Dot product**<br/>
+
+The dot product measures alignment:
+
+`A · B = |A||B| cos(angle)`
+
+A positive result means the vectors point generally together, zero means they are perpendicular, and a negative result means they point generally apart. The purple arrow is the projection of **A** onto **B**; the dashed segment is the part of **A** perpendicular to **B**.
+
+<cg-demo
+	demo="vector-dot-product"
+	aspect="16:10"
+	aria-label="Interactive vector dot product and projection demonstration">
+	<img data-fallback
+		src="./vector-dot-product-fallback.png"
+		alt="Two vectors with the angle between them and the projection of A onto B">
+</cg-demo>
+
+Try making the dot product zero. Then make **A** a positive or negative scalar multiple of **B** and compare the angle and projection. Cross products and more vector operations will build on these foundations later.
+
+<!-- Markdeep: --><style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace}</style><script src="../../markdeep.min.js" charset="utf-8"></script><script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>

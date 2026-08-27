@@ -1,0 +1,30 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="stylesheet" href="/shared/markdeep_theme.css?v=hermes-20260826a">
+<link rel="stylesheet" href="/shared/hljs-darkmoss.css">
+<script src="/shared/interactive/loader.js?v=20260826u"></script>
+
+(insert ../../shared/header.md.html here)
+
+**<big>Camera Projection Lab</big>**<br/>
+
+This page is an unlisted experiment in combining Markdeep prose with reusable interactive graphics. The scene below shows a perspective camera from the outside while the inset shows the image produced by that camera.
+
+Change the field of view and clipping planes to see the frustum reshape. Move the yellow sphere through depth to see when it falls outside the visible interval. Drag the world view to inspect the construction from another angle.
+
+<cg-demo
+	demo="camera-projection"
+	aspect="16:10"
+	aria-label="Interactive perspective camera projection demonstration">
+	<img data-fallback
+		src="./camera-projection-fallback.png"
+		alt="A perspective camera frustum and the image it produces">
+</cg-demo>
+
+**Why this is a useful pilot**<br/>
+
+The figure exercises the parts future graphics lessons will need: a 3D scene, multiple synchronized views, direct manipulation, native controls, responsive rendering, and a readable fallback. The surrounding document remains ordinary Markdeep.
+
+The renderer only draws when the figure first appears or something changes. All interactive figures on a page share one WebGL context, which leaves room for denser articles without opening a renderer for every canvas.
+
+<!-- Markdeep: --><style class="fallback">body{visibility:hidden;white-space:pre;font-family:monospace}</style><script src="../../markdeep.min.js" charset="utf-8"></script><script>window.alreadyProcessedMarkdeep||(document.body.style.visibility="visible")</script>
