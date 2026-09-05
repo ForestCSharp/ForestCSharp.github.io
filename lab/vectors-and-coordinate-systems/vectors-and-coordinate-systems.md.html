@@ -8,15 +8,15 @@
 
 **<big>Vectors and Coordinate Systems</big>**<br/>
 
-A vector describes a direction and a magnitude. The familiar tuple `(x, y, z)` is not the vector itself—it is the vector measured against a particular set of basis directions. These three visualizers build from that definition to two of the most common vector operations in graphics.
+A vector describes a direction and a magnitude, and are used in computer graphics to describe locations, velocities, and many other useful 2D and 3D quantities.
 
 **1. Building a vector from a basis**<br/>
 
-If the basis directions are **x̂**, **ŷ**, and **ẑ**, a vector is the sum of three scaled basis vectors:
+A set of orthogonal (perpendicular) basis vectors can be used to describe a vector. If the basis directions are **x̂**, **ŷ**, and **ẑ**, a vector is the sum of three scaled basis vectors:
 
 `v = v[x] x̂ + v[y] ŷ + v[z] ẑ`
 
-The red, green, and blue arrows place those three pieces head-to-tail. Together they arrive at the same endpoint as the yellow vector. Change any coefficient to rebuild the vector along that basis direction.
+Intuitively, this is like saying "move this amount in the x-direction, then this second amount in the y-direction, and finally a third amount in the z-direction. The red, green, and blue arrows place those three pieces head-to-tail. Together they arrive at the same endpoint as the yellow vector. Change any coefficient to rebuild the vector along that basis direction.
 
 <cg-demo
 	demo="vector-from-basis"
@@ -29,7 +29,7 @@ The red, green, and blue arrows place those three pieces head-to-tail. Together 
 
 **2. Vector addition**<br/>
 
-Vector addition combines displacements component by component:
+Vector addition combines vectors component by component:
 
 `A + B = (A[x] + B[x], A[y] + B[y], A[z] + B[z])`
 

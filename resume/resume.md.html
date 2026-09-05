@@ -13,7 +13,7 @@ Chicago, IL | <forestcollinssharp@gmail.com> | <https://github.com/ForestCSharp>
 
 <div class="resume-section-heading">Professional Summary</div>
 
-C++ software engineer with 10 years of experience building graphics systems, performance-sensitive runtimes, and developer tools for large cross-platform products. Specializes in rendering and GPU diagnostics, editor and asset-pipeline workflows, and debugging across PC and resource-constrained hardware. Known for turning ambiguous performance and production problems into measurable improvements for engineering and content teams.
+C++ software engineer with 10 years of experience building graphics systems, performance-sensitive runtimes, and developer tools for cross-platform products. Experience included GPU timing and diagnostics, rendering optimization, visual editors, and asset pipelines.
 
 <div class="resume-section-heading">Core Skills</div>
 
@@ -27,17 +27,19 @@ C++ software engineer with 10 years of experience building graphics systems, per
 **Rendering Engineer | Psyonix**<br/>
 **Rocket League | Remote | June 2025 - Present**<br/>
 
-- Lead rendering performance investigations across console hardware, delivering GPU timing fixes, dynamic-resolution improvements, and frame-pacing analysis.
-- Diagnose platform-specific rendering crashes and shader failures across Nintendo Switch, PlayStation, Xbox, and PC.
-- Build profiling and diagnostic tools for engineers and artists, including particle preview statistics, GPU object naming, asset profiling, and capture documentation.
-- Partner with art, QA, and UX teams to ship visual-quality and accessibility improvements within memory and frame-time budgets.
+- Corrected GPU time reporting on Nintendo Switch and Switch 2, improving the timing inputs used by the dynamic resolution system on both platforms.
+- Diagnosed platform-specific rendering crashes and shader failures across Nintendo Switch, PlayStation, Xbox, and PC.
+- Built profiling and diagnostic tools for engineers and artists, including particle preview statistics, GPU object naming, asset profiling, and capture documentation.
+- Partnered with art, QA, and UX teams to ship visual-quality and accessibility improvements within memory and frame-time budgets.
 
 **UI Engineer | Epic Games**<br/>
 **Fortnite / Unreal Engine | Remote | 2021 - 2025**<br/>
 
 - Delivered user-facing and creator-facing UI systems across multiple large-scale, cross-platform products.
+- Refactored the map system in LEGO Fortnite Odyssey to improve performance and extensibility; this new system was subsequently adapted by other teams.
 - Built a WYSIWYG editor that replaced a data-table-only authoring workflow with immediate visual feedback for designers.
-- Improved Unreal Engine's material editor with long-requested workflow upgrades for content creators.
+- Improved material-node preview workflows by adding a preview button to each node and a keyboard shortcut to preview the hovered node.
+- Implemented an ergonomic vector-swizzle node with draggable connections between an arbitrary number of input and output vectors.
 
 **Software Engineer | Ghostpunch Games**<br/>
 **Unannounced Project | Remote | 2020 - 2021**<br/>
@@ -48,7 +50,7 @@ C++ software engineer with 10 years of experience building graphics systems, per
 **Software Engineer | People Can Fly**<br/>
 **Outriders | Remote | 2019 - 2020**<br/>
 
-- Rewrote a C++ and JavaScript bridge with templates, reducing boilerplate required to bind runtime systems to settings UI.
+- Reworked the C++/JavaScript bridge around templates that generated most binding code, using template specializations for type-specific behavior.
 - Implemented runtime and front-end integration across C++, HTML, and JavaScript, accelerating settings UI delivery.
 
 **Software Engineer | NetherRealm Studios**<br/>
@@ -66,16 +68,16 @@ C++ software engineer with 10 years of experience building graphics systems, per
 **Junior Gameplay Engineer | Boss Key Productions**<br/>
 **LawBreakers | Raleigh, NC | 2016 - 2017**<br/>
 
-- Reimplemented performance-critical systems in C++ to sustain a 60 FPS target across desktop and console.
+- Reimplemented performance-critical systems in C++ to help meet a 60 FPS target on desktop and console.
 - Built an integration between NVIDIA Highlights and the product's runtime event system for automated capture.
 
-<div class="resume-section-heading">Selected C++ & Graphics Projects</div>
+<div class="resume-section-heading">Selected Technical Projects</div>
 
 **Blender Live Link**<br/>
 **<https://github.com/ForestCSharp/blender_live_link>**<br/>
 
-- Designed a Blender-to-C++ synchronization pipeline that streams scene updates over a FlatBuffers socket protocol.
-- Moved hot-path export work from Python into native C++ inside Blender, producing reported gains of 10x to 40x on larger scenes while using cross-implementation comparisons to preserve protocol compatibility.
+- Designed a Blender-to-C++ synchronization pipeline that streamed scene updates over a FlatBuffers socket protocol.
+- Accelerated FlatBuffers data generation by 10x–40x compared with the previous Python generator by moving the implementation into native C++ inside Blender; used cross-implementation comparisons to preserve protocol compatibility.
 
 **Cross-Platform Renderer (c_game)**<br/>
 **<https://github.com/forestcsharp/c_game>**<br/>

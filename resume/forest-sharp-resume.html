@@ -238,12 +238,7 @@
         <section aria-labelledby="summary">
             <h2 id="summary">Professional Summary</h2>
             <p>
-                C++ software engineer with 10 years of experience building graphics systems,
-                performance-sensitive runtimes, and developer tools for large cross-platform products.
-                Specializes in rendering and GPU diagnostics, editor and asset-pipeline workflows, and
-                debugging across PC and resource-constrained hardware. Known for turning ambiguous
-                performance and production problems into measurable improvements for engineering and
-                content teams.
+                C++ software engineer with 10 years of experience building graphics systems, performance-sensitive runtimes, and developer tools for cross-platform products. Experience included GPU timing and diagnostics, rendering optimization, visual editors, and asset pipelines.
             </p>
         </section>
 
@@ -267,10 +262,10 @@
                 </div>
                 <div class="subhead">Rocket League | Remote</div>
                 <ul>
-                    <li>Lead rendering performance investigations across console hardware, delivering GPU timing fixes, dynamic-resolution improvements, and frame-pacing analysis.</li>
-                    <li>Diagnose platform-specific rendering crashes and shader failures across Nintendo Switch, PlayStation, Xbox, and PC.</li>
-                    <li>Build profiling and diagnostic tools for engineers and artists, including particle preview statistics, GPU object naming, asset profiling, and capture documentation.</li>
-                    <li>Partner with art, QA, and UX teams to ship visual-quality and accessibility improvements within memory and frame-time budgets.</li>
+                    <li>Corrected GPU time reporting on Nintendo Switch and Switch 2, improving the timing inputs used by the dynamic resolution system on both platforms.</li>
+                    <li>Diagnosed platform-specific rendering crashes and shader failures across Nintendo Switch, PlayStation, Xbox, and PC.</li>
+                    <li>Built profiling and diagnostic tools for engineers and artists, including particle preview statistics, GPU object naming, asset profiling, and capture documentation.</li>
+                    <li>Partnered with art, QA, and UX teams to ship visual-quality and accessibility improvements within memory and frame-time budgets.</li>
                 </ul>
             </article>
 
@@ -282,8 +277,10 @@
                 <div class="subhead">Fortnite / Unreal Engine | Remote</div>
                 <ul>
                     <li>Delivered user-facing and creator-facing UI systems across multiple large-scale, cross-platform products.</li>
+                    <li>Refactored the map system in LEGO Fortnite Odyssey to improve performance and extensibility; this new system was subsequently adapted by other teams.</li>
                     <li>Built a WYSIWYG editor that replaced a data-table-only authoring workflow with immediate visual feedback for designers.</li>
-                    <li>Improved Unreal Engine's material editor with long-requested workflow upgrades for content creators.</li>
+                    <li>Improved material-node preview workflows by adding a preview button to each node and a keyboard shortcut to preview the hovered node.</li>
+                    <li>Implemented an ergonomic vector-swizzle node with draggable connections between an arbitrary number of input and output vectors.</li>
                 </ul>
             </article>
 
@@ -306,7 +303,7 @@
                 </div>
                 <div class="subhead">Outriders | Remote</div>
                 <ul>
-                    <li>Rewrote a C++ and JavaScript bridge with templates, reducing boilerplate required to bind runtime systems to settings UI.</li>
+                    <li>Reworked the C++/JavaScript bridge around templates that generated most binding code, using template specializations for type-specific behavior.</li>
                     <li>Implemented runtime and front-end integration across C++, HTML, and JavaScript, accelerating settings UI delivery.</li>
                 </ul>
             </article>
@@ -342,22 +339,22 @@
                 </div>
                 <div class="subhead">LawBreakers | Raleigh, NC</div>
                 <ul>
-                    <li>Reimplemented performance-critical systems in C++ to sustain a 60 FPS target across desktop and console.</li>
+                    <li>Reimplemented performance-critical systems in C++ to help meet a 60 FPS target on desktop and console.</li>
                     <li>Built an integration between NVIDIA Highlights and the product's runtime event system for automated capture.</li>
                 </ul>
             </article>
         </section>
 
         <section aria-labelledby="projects">
-            <h2 id="projects">Selected C++ &amp; Graphics Projects</h2>
+            <h2 id="projects">Selected Technical Projects</h2>
             <article class="item">
                 <div class="item-head">
                     <h3>Blender Live Link</h3>
                     <div class="meta"><a href="https://github.com/ForestCSharp/blender_live_link">ForestCSharp/blender_live_link</a></div>
                 </div>
                 <ul>
-                    <li>Designed a Blender-to-C++ synchronization pipeline that streams scene updates over a FlatBuffers socket protocol.</li>
-                    <li>Moved hot-path export work from Python into native C++ inside Blender, producing reported gains of 10x to 40x on larger scenes while using cross-implementation comparisons to preserve protocol compatibility.</li>
+                    <li>Designed a Blender-to-C++ synchronization pipeline that streamed scene updates over a FlatBuffers socket protocol.</li>
+                    <li>Accelerated FlatBuffers data generation by 10x–40x compared with the previous Python generator by moving the implementation into native C++ inside Blender; used cross-implementation comparisons to preserve protocol compatibility.</li>
                 </ul>
             </article>
 
